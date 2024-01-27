@@ -1,0 +1,47 @@
+#file: noinspection YAMLSchemaValidation
+COAL:
+  give: 10
+  cost: 200
+  displayname: "<gold><bold>Coal Generator<reset>"
+  block: COAL_BLOCK
+  drop: COAL
+  tiers:
+    1: # Default
+      drop: 30
+      value: 0.5
+    2:
+      cost: 100
+      drop: 30
+      value: 2.5
+    3:
+      cost: 800
+      drop: 15
+      value: 2.5
+    4:
+      cost: 1500
+      drop: 15
+      value: 4.5
+    5:
+      cost: 800
+      drop: 30
+      value: 12.5
+
+COPPER:
+  give: 0
+  cost: 1200
+  displayname: "<gold><bold>Copper Generator<reset>"
+  block: COPPER_BLOCK
+  drop: COPPER_INGOT
+  tiers:
+    1: # Default
+      drop: 30
+      value: 2.5
+    2:
+      cost: 1000
+      drop: 30
+      value: 3
+    3:
+      cost: 2500
+      drop: 30
+      value: 5
+

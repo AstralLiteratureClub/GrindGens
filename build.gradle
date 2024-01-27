@@ -1,0 +1,123 @@
+//file:noinspection VulnerableLibrariesLocal
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    //NMS
+//    id("io.papermc.paperweight.userdev") version "1.5.6"
+}
+
+group = 'bet.astral'
+version = '1.0'
+description = 'GrindGens'
+java.sourceCompatibility = JavaVersion.VERSION_16
+java.targetCompatibility = JavaVersion.VERSION_16
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'https://jitpack.io' }
+
+    // Papermc
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
+
+    // GeyserMC
+    maven {
+        url = uri("https://repo.opencollab.dev/main/")
+    }
+
+    // Rose Stacker
+    maven {
+        url = 'https://repo.rosewooddev.io/repository/public/'
+    }
+}
+
+dependencies {
+    implementation 'bet.astral:MessageManager:1.5-dev'
+
+    // Cloud command framework
+    implementation("cloud.commandframework:cloud-core:1.8.4")
+    implementation("cloud.commandframework:cloud-paper:1.8.4")
+    implementation("cloud.commandframework:cloud-minecraft-extras:1.8.4")
+
+    compileOnly 'com.github.decentsoftware-eu:decentholograms:2.8.6'
+
+    // Lombok
+    implementation 'org.projectlombok:lombok:1.18.28'
+    annotationProcessor 'org.projectlombok:lombok:1.18.28'
+
+    // Geyser (Bedrock java mc api)
+    compileOnly('org.geysermc.geyser:api:2.2.0-SNAPSHOT')
+    // Floodgate allows more features from bedrock to be used
+    compileOnly('org.geysermc.floodgate:api:2.2.2-SNAPSHOT')
+    // The bukkit API
+    //paperweight.paperDevBundle("1.20.1-R0.1-SNAPSHOT")
+    compileOnly ('io.papermc.paper:paper-api:1.20.2-R0.1-SNAPSHOT')
+
+    // Rose Stacker
+    compileOnly 'dev.rosewood:rosestacker:1.5.17'
+
+    //
+    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
+}
+
+// Some shit is importing 1.13 bukkit api and not 1.20.1 api
+configurations.compileOnly {
+    exclude group: 'org.spigotmc', module: 'spigot'
+    exclude group: 'org.spigotmc', module: 'spigot-api'
+    exclude group: 'org.bukkit', module: 'bukkit'
+}
+shadowJar {
+    archiveClassifier = null
+    dependencies {
+    }
+}
+
+tasks.assemble {
+    //dependsOn(reobfJar)
+}
+
+jar {
+    enabled = false
+    dependsOn(shadowJar)
+}
+
+def targetJavaVersion = 17
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 12 || JavaVersion.current().isJava12Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching(['*.yml']) {
+        expand([version: version])
+    }
+}
+
+configurations {
+}
+
+
+publishing {
+    publications {
+        //noinspection GroovyAssignabilityCheck
+        maven(MavenPublication) {
+            from(components.java)
+        }
+    }
+}
