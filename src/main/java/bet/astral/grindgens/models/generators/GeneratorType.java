@@ -1,91 +1,92 @@
+/*
+ * Copyright (C) 2024 Astral.bet - All Rights Reserved
+ *
+ * Unauthorized copying or redistribution of this file in source and binary forms via any medium
+ * is strictly prohibited.
+ */
+
 package bet.astral.grindgens.models.generators;
 
+import bet.astral.grindgens.models.Tier;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedList;
 import java.util.List;
 
 public final class GeneratorType {
 	private final String name;
-	private final Material groundMaterial;
-	private final ItemStack dropMaterial;
-	private final Component displayname;
-	private final GeneratorTier defaultTier;
-	private final List<GeneratorTier> generatorTiers;
+	private final ItemStack sourceItem;
+	private final Component upgradeMenuDisplay;
+	private final List<Tier> dropRateTiers;
+	private final List<Tier> valueTiers;
 	private final int amountGiven;
 	private final double cost;
 
-	public GeneratorType(String name, Material groundMaterial, Material dropMaterial, Component displayname, int newPlayerReceive, double cost, GeneratorTier defaultTier, GeneratorTier... tiers) {
+	public GeneratorType(String name, ItemStack sourceItem, Component upgradeMenuDisplay, int newPlayerReceive, double cost, List<Tier> dropRateTiers, List<Tier> valueTiers) {
 		this.name = name;
-		this.groundMaterial = groundMaterial;
-		this.dropMaterial = new ItemStack(dropMaterial);
-		this.displayname = displayname;
-		this.defaultTier = defaultTier;
+		this.sourceItem = sourceItem;
+		this.upgradeMenuDisplay = upgradeMenuDisplay;
 		this.amountGiven = newPlayerReceive;
 		this.cost = cost;
-		this.generatorTiers = List.of(tiers);
+		this.dropRateTiers = dropRateTiers;
+		this.valueTiers = valueTiers;
 	}
 	public String name() {
 		return name;
 	}
 
 	@Contract(pure = true)
-	public Material groundMaterial() {
-		return groundMaterial;
+	public ItemStack sourceItem() {
+		return sourceItem;
 	}
 
 	@Contract(pure = true)
-	public ItemStack dropMaterial() {
-		return dropMaterial;
-	}
-
-	@Contract(pure = true)
-	public Component displayname(){
-		return displayname;
-	}
-
-	public int defaultDropRate() {
-		return defaultTier.dropRate();
-	}
-
-	@Contract(pure = true)
-	public int maxTier() {
-		return generatorTiers.size()+1;
+	public Component upgradeMenuDisplay(){
+		return upgradeMenuDisplay;
 	}
 
 	public double defaultValue() {
-		return defaultTier.value();
+		return valueTier(0).value();
 	}
 
 	@Contract(pure = true)
-	public GeneratorTier defaultTier() {
-		return defaultTier;
+	public double defaultDropRate() {
+		return dropRateTier(0).value();
 	}
 
-	public @NotNull List<GeneratorTier> generatorTiers() {
-		List<GeneratorTier> tiers = new LinkedList<>(generatorTiers);
-		tiers.add(0, defaultTier);
-		return tiers;
+	public int maxValueTier(){
+		return valueTiers.size()-1;
+	}
+	public int maxDropRateTier(){
+		return dropRateTiers.size()-1;
 	}
 
-	public GeneratorTier getTier(int tier){
-		if (tier < 0){
+	public Tier valueTier(int tier){
+		if (tier < 0) {
 			tier = 0;
-		} else if (tier > maxTier()-1){
-			return null;
-//			tier = maxTier();
 		}
 
 		if (tier == 0){
-			return defaultTier;
+			return valueTiers.get(0);
+		} else if (tier > valueTiers.size()-1){
+			tier = valueTiers.size()-1;
 		}
-		tier--;
-		return generatorTiers.get(tier);
+		return valueTiers.get(tier);
 	}
+	public Tier dropRateTier(int tier){
+		if (tier < 0) {
+			tier = 0;
+		}
+
+		if (tier == 0){
+			return dropRateTiers.get(0);
+		} else if (tier > dropRateTiers.size()-1){
+			tier = dropRateTiers.size()-1;
+		}
+		return dropRateTiers.get(tier);
+	}
+
 
 	public int amountGiven() {
 		return amountGiven;

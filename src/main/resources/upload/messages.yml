@@ -1,0 +1,7 @@
+# Not in use currently.
+placeholders:
+  - name: prefix
+    value: "<#34eb9b><bold>GENS <dark_gray><bold>|<reset>"
+
+
+command-give: "%prefix% <green>You were given <gray>x<yellow>%amount% <white>%type%<green> generator of tier <yellow>%tier%<green>."

@@ -1,46 +1,67 @@
+/*
+ * Copyright (C) 2024 Astral.bet - All Rights Reserved
+ *
+ * Unauthorized copying or redistribution of this file in source and binary forms via any medium
+ * is strictly prohibited.
+ */
+
 package bet.astral.grindgens.models;
 
+import bet.astral.grindgens.GrindGens;
+import bet.astral.grindgens.models.component.Component;
 import bet.astral.grindgens.models.generators.Generator;
-import bet.astral.grindgens.models.hopper.ChunkHopper;
-import org.bukkit.entity.Player;
+import lombok.Getter;
+import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class GenPlayer {
+	private final GrindGens grindGens;
 	private final UUID uuid;
 	private final List<Generator> generators;
-	private final List<ChunkHopper> chunkHoppers;
 	private int maxGenerators = 25;
+	@Getter
+	private double bitcoins;
+	private boolean isNew;
 
-	public GenPlayer(Player player) {
+
+	@ApiStatus.Internal
+	public GenPlayer(GrindGens grindGens){
+		this.grindGens = grindGens;
+		this.uuid = UUID.randomUUID();
+		this.generators = new LinkedList<>();
+	}
+
+	public GenPlayer(GrindGens grindGens, OfflinePlayer player) {
+		this.grindGens = grindGens;
 		this.uuid = player.getUniqueId();
 		this.generators = new LinkedList<>();
-		this.chunkHoppers = new LinkedList<>();
 	}
 
-	@ApiStatus.Internal
-	public void addGenerator(@NotNull Generator generator){
-		this.generators.add(generator);
+	public GenPlayer(GrindGens grindGens, UUID id) {
+		this.grindGens = grindGens;
+		this.uuid = id;
+		this.generators = new ArrayList<>();
 	}
 
-	@ApiStatus.Internal
-	public void addGenerators(@NotNull Generator... generators){
-		this.generators.addAll(List.of(generators));
-	}
 
 	@ApiStatus.Internal
-	public void addChunkHopper(@NotNull ChunkHopper chunkHopper){
-		chunkHoppers.add(chunkHopper);
-	}
-	@ApiStatus.Internal
-	public void addChunkHoppers(@NotNull ChunkHopper... chunkHoppers){
-		for (ChunkHopper chunkHopper : chunkHoppers){
-			addChunkHopper(chunkHopper);
+	public void addComponent(Component component) {
+		if (component instanceof Generator generator){
+			if (generators.contains(component)){
+				return;
+			}
+			this.generators.add(generator);
 		}
 	}
 
+	@ApiStatus.Internal
+	public void removeComponent(Component component) {
+		if (component instanceof Generator generator){
+			this.generators.remove(generator);
+		}
+	}
 	public List<Generator> generators() {
 		return generators;
 	}
@@ -49,16 +70,38 @@ public class GenPlayer {
 		return uuid;
 	}
 
-	public List<ChunkHopper> chunkHoppers() {
-		return chunkHoppers;
-	}
-
 	public int maxGenerators() {
 		return maxGenerators;
 	}
 
 	public GenPlayer setMaxGenerators(int maxGenerators) {
 		this.maxGenerators = maxGenerators;
+		return this;
+	}
+
+
+	public void requestSave() {
+		if (this.grindGens.playerManager().requestedSaves.contains(this)){
+			return;
+		}
+		this.grindGens.playerManager().requestedSaves.add(this);
+	}
+
+	public Set<Component> components() {
+		return new HashSet<>(generators);
+	}
+
+
+	public void setBitcoin(double v) {
+		this.bitcoins = v;
+	}
+
+	public boolean isNew() {
+		return isNew;
+	}
+
+	public GenPlayer setNew(boolean aNew) {
+		isNew = aNew;
 		return this;
 	}
 }

@@ -1,9 +1,14 @@
+/*
+ * Copyright (C) 2024 Astral.bet - All Rights Reserved
+ *
+ * Unauthorized copying or redistribution of this file in source and binary forms via any medium
+ * is strictly prohibited.
+ */
+
 package bet.astral.grindgens.listeners;
 
 import bet.astral.grindgens.GrindGens;
-import bet.astral.grindgens.manager.ItemCreator;
-import bet.astral.grindgens.manager.component.GlobalComponentManager;
-import bet.astral.grindgens.models.generators.GeneratorType;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -18,16 +23,7 @@ public class ConnectionListener implements Listener {
 
 	@EventHandler
 	public void onJoin(PlayerJoinEvent event){
-		this.grindGens.playerManager().load(event.getPlayer());
-		GlobalComponentManager globalComponentManager = grindGens.globalComponentManager();
-		// TODO make this only for new players
-		ItemCreator itemCreator = grindGens.itemCreator();
-
-		for (GeneratorType type : globalComponentManager.generatorTypes()){
-			if (type.amountGiven()>0){
-				itemCreator.createGenerator(type, 0);
-			}
-		}
+		Bukkit.getServer().getScheduler().runTaskLater(grindGens, ()->this.grindGens.playerManager().load(event.getPlayer()), 5);
 	}
 
 	@EventHandler

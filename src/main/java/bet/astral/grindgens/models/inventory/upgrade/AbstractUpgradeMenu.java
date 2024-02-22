@@ -1,17 +1,34 @@
-package bet.astral.grindgens.models.inventory;
+/*
+ * Copyright (C) 2024 Astral.bet - All Rights Reserved
+ *
+ * Unauthorized copying or redistribution of this file in source and binary forms via any medium
+ * is strictly prohibited.
+ */
+
+package bet.astral.grindgens.models.inventory.upgrade;
 
 import bet.astral.grindgens.models.component.Component;
+import bet.astral.grindgens.models.generators.Generator;
+import bet.astral.grindgens.models.generators.GeneratorType;
+import bet.astral.grindgens.models.inventory.UpgradeMenu;
 import bet.astral.grindgens.utils.TriState;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 
-@SuppressWarnings("NullableProblems")
 public abstract class AbstractUpgradeMenu<T extends Component> implements UpgradeMenu<T> {
+	@NotNull
+	protected static Inventory createUpgradeMenu(UpgradeMenu<Generator> generatorUpgradeMenu){
+		Generator generator = generatorUpgradeMenu.component();
+		GeneratorType type = generator.generatorType();
+		return Bukkit.createInventory(generatorUpgradeMenu, 9, type.upgradeMenuDisplay());
+	}
+
 	private final DecimalFormat percentageFormat = new DecimalFormat(".0");
 	@NotNull
 	private final T component;
@@ -56,7 +73,7 @@ public abstract class AbstractUpgradeMenu<T extends Component> implements Upgrad
 	}
 
 	@ApiStatus.OverrideOnly
-	public AbstractUpgradeMenu clone(){
+	public @NotNull AbstractUpgradeMenu clone(){
 		return null;
 	}
 
@@ -84,12 +101,14 @@ public abstract class AbstractUpgradeMenu<T extends Component> implements Upgrad
 		if (formattedPercentage.isEmpty() || formattedPercentage.isBlank())
 			formattedPercentage = "0";
 		if (state == TriState.SAME){
-			return net.kyori.adventure.text.Component.text(currentValue, sameColor).
-			appendSpace().append(
+			return net.kyori.adventure.text.Component.text(currentValue, sameColor);
+			/*
+			.appendSpace().append(
 			net.kyori.adventure.text.Component.text("(", NamedTextColor.GRAY)).append(
 			net.kyori.adventure.text.Component.text(plusMinus+formattedPercentage, sameColor)).append(
 			net.kyori.adventure.text.Component.text("%", NamedTextColor.WHITE)).append(
 			net.kyori.adventure.text.Component.text(")", NamedTextColor.GRAY));
+			 */
 		}
 		return net.kyori.adventure.text.Component.text(currentValue, state == TriState.HIGHER ? worseColor : betterColor).append(
 				net.kyori.adventure.text.Component.text(" -> ", NamedTextColor.GRAY)).append(
@@ -100,4 +119,10 @@ public abstract class AbstractUpgradeMenu<T extends Component> implements Upgrad
 				net.kyori.adventure.text.Component.text("%", NamedTextColor.WHITE))).append(
 				net.kyori.adventure.text.Component.text(")", NamedTextColor.GRAY))));
 	}
+
+	@NotNull
+	public net.kyori.adventure.text.Component displayname(int tier) {
+		return net.kyori.adventure.text.Component.text("Tier ", NamedTextColor.GRAY).append(net.kyori.adventure.text.Component.text(tier, NamedTextColor.YELLOW));
+	}
+
 }

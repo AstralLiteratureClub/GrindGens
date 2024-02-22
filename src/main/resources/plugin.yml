@@ -3,7 +3,7 @@ version: '${version}'
 main: bet.astral.grindgens.GrindGens
 api-version: '1.20'
 prefix: GG
-load: STARTUP
-depend: [RoseStacker, Vault]
+
+depend: [Skript, Vault]
 authors: [Antritus]
 description: Shes sleeping right next to me 

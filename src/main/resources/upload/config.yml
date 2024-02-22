@@ -1,0 +1,5 @@
+chunk:
+  max-generators: 350
+
+player:
+  max-generators: 1000

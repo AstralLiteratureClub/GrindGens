@@ -1,61 +1,77 @@
+/*
+ * Copyright (C) 2024 Astral.bet - All Rights Reserved
+ *
+ * Unauthorized copying or redistribution of this file in source and binary forms via any medium
+ * is strictly prohibited.
+ */
+
 package bet.astral.grindgens.manager.component;
 
 import bet.astral.grindgens.GrindGens;
 import bet.astral.grindgens.models.GenPlayer;
-import bet.astral.grindgens.models.component.*;
-import bet.astral.grindgens.models.generators.Generator;
+import bet.astral.grindgens.models.component.Component;
 import bet.astral.grindgens.models.generators.GeneratorType;
-import bet.astral.grindgens.models.hopper.ChunkHopper;
 import bet.astral.grindgens.models.internals.ComponentLoader;
-import bet.astral.grindgens.models.internals.PlayerLoader;
 import bet.astral.grindgens.models.internals.SecureId;
 import bet.astral.grindgens.models.internals.Ticked;
 import bet.astral.grindgens.utils.Configuration;
 import com.google.common.collect.ImmutableSet;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
-public class GlobalComponentManager implements Ticked, PlayerLoader, SecureId, ComponentLoader<Component>, ComponentManager {
-	private final Set<GeneratorType> generatorTypes;
-	private final Random random = new Random((System.nanoTime()*System.nanoTime())/System.currentTimeMillis());
+public class GlobalComponentManager implements Ticked, SecureId, ComponentLoader<Component>{
 	private final GrindGens grindGens;
-	private final List<SubComponentManager<?>> subComponentManagers = new ArrayList<>();
-	private final Map<Class<?>, List<SubComponentManager<?>>> componentManagers = new HashMap<>();
+	private final Random random = new Random((System.nanoTime()*System.nanoTime())/System.currentTimeMillis());
+	private final Map<Location, Component> locationComponents = new HashMap<>();
+	private final Map<Chunk, Set<Component>> chunkComponents = new HashMap<>();
+	private final Set<GeneratorType> generatorTypes = new HashSet<>();
+	private final Set<Component> componentsToSave = new HashSet<>();
 
 	public GlobalComponentManager(GrindGens grindGens) {
 		this.grindGens = grindGens;
-		ChunkHopperManager<?> chunkHopperManager = new ChunkHopperManager<>(grindGens, this);
-		GeneratorManager<?> generatorManager = new GeneratorManager<>(grindGens, this);
 
-		subComponentManagers.add(generatorManager);
-		subComponentManagers.add(chunkHopperManager);
+		Configuration configuration = new Configuration(this);
+		YamlConfiguration generatorFinder = YamlConfiguration.loadConfiguration(new File(grindGens.getDataFolder(), "/components/generator-finder.yml"));
+		List<String> directions = generatorFinder.getStringList("generators");
+		grindGens.getLogger().info("Preparing to load generators!");
+		for (String dir : directions){
+			dir = dir.replaceFirst("./", "");
+			dir = dir.replaceFirst("//", "");
+			dir = dir.replaceFirst("\\\\", "");
+			File file = new File(grindGens.getDataFolder()+ File.separator, dir);
+			grindGens.getLogger().info("Found generator directory/file: "+ dir +" | Is created: "+ file.exists() + " | Is directory: "+ file.isDirectory());
+			add(generatorTypes, configuration.loadGeneratorsFolder(file));
+			// This can check that if the file is a folder or not and just detect .yml files
+			grindGens.getLogger().info("Loaded "+ generatorTypes.size()+" generators");
+		}
+		grindGens.getLogger().info("Loaded all of the generators! Found "+ generatorTypes.size() + "!");
 
-		componentManagers.put(Generator.class, new LinkedList<>());
-		componentManagers.put(ChunkHopper.class, new LinkedList<>());
-		componentManagers.put(UpgradeableComponent.class, new LinkedList<>());
-		componentManagers.put(MenuReplacementComponent.class, new LinkedList<>());
-		componentManagers.put(HologramComponent.class, new LinkedList<>());
-		componentManagers.put(MinableComponent.class, new LinkedList<>());
-		componentManagers.put(Component.class, new LinkedList<>());
 
-		componentManagers.get(Component.class).addAll(List.of(generatorManager, chunkHopperManager));
+		Runnable runnable = () -> {
+			Set<Component> components = new HashSet<>(componentsToSave);
+			componentsToSave.clear();
+			for (Component component : components){
+				if (component.deleted()) {
+					continue;
+				}
+				grindGens.componentDatabase().saveComponent(component);
+			}
+		};
 
-		componentManagers.get(ChunkHopper.class).add(chunkHopperManager);
-		componentManagers.get(Generator.class).add(generatorManager);
-
-		componentManagers.get(UpgradeableComponent.class).addAll(List.of(generatorManager, chunkHopperManager));
-		componentManagers.get(MinableComponent.class).addAll(List.of(generatorManager, chunkHopperManager));
-
-		componentManagers.get(HologramComponent.class).addAll(List.of(chunkHopperManager));
-		componentManagers.get(MenuReplacementComponent.class).addAll(List.of(chunkHopperManager));
-
-		Configuration configuration = new Configuration();
-		generatorTypes = configuration.loadGenerators(new File(grindGens.getDataFolder(), "generators.yml"));
+		grindGens.getServer().getScheduler().runTaskTimerAsynchronously(grindGens, runnable, 100, 20);
+	}
+	public void add(Set<GeneratorType> types, Set<GeneratorType> newTypes){
+		for (GeneratorType type : types){
+			newTypes.removeIf(genType->genType.name().equalsIgnoreCase(type.name()));
+		}
+		types.addAll(newTypes);
 	}
 
 	public GeneratorType getGeneratorType(String generatorStringType) {
@@ -65,107 +81,90 @@ public class GlobalComponentManager implements Ticked, PlayerLoader, SecureId, C
 		return ImmutableSet.copyOf(generatorTypes);
 	}
 
-
-	private <C extends Component>  List<C> getInternal(SubComponentManager<?> componentManager, Chunk chunk, Class<C> type){
-		List<C> found = componentManager.getInternal(chunk, type);
-		if (found != null && found.isEmpty()){
-			return null;
-		}
-		return found;
+	public @Nullable Component get(@NotNull Location location) {
+		return locationComponents.get(location);
 	}
 
-	@Override
-	public <C extends Component> @Nullable C get(@NotNull Location location, @NotNull Class<C> type) {
-		List<SubComponentManager<?>> subComponentManagers = componentManagers.get(type);
-		if (subComponentManagers == null || subComponentManagers.isEmpty()){
-			return null;
-		}
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			if (subComponentManager.getInternal(location, type) != null){
-				return subComponentManager.getInternal(location, type);
-			}
-		}
-		return null;
+	public @Nullable Set<@NotNull Component> get(@NotNull Chunk chunk) {
+		return chunkComponents.get(chunk);
 	}
 
-	@Override
-	public @Nullable <C extends Component> List<@NotNull C> get(@NotNull Chunk chunk, @NotNull Class<C> type) {
-		C found = null;
-		List<SubComponentManager<?>> subComponentManagers = componentManagers.get(type);
-		if (subComponentManagers == null || subComponentManagers.isEmpty()){
-			return null;
-		}
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			if (subComponentManager.getInternal(chunk, type) != null){
-				return subComponentManager.getInternal(chunk, type);
-			}
-		}
-		return null;
-	}
-
-	@Override
 	public void save(@NotNull Component component) {
-		if (componentManagers.get(component.getClass()) == null){
+		Location location = component.location();
+		Block block = location.getBlock();
+		if (block.getType() != component.blockMaterial()) {
+			grindGens.getLogger().severe("Component of " + component.type().name() + " at " + location.x() + ", " + location.y() + ", " + location.z() + ", " + location.getWorld().getName() + " is not the correct block type of " + component.blockMaterial().name() + " but instead " + block.getType().name() + ".\nThis component will not be used and will be removed from player's components!");
+			GenPlayer player = component.genPlayer();
+			player.removeComponent(component);
+			player.requestSave();
 			return;
 		}
-		//noinspection unchecked
-		SubComponentManager<Component> subComponentManager = (SubComponentManager<Component>) componentManagers.get(component.getClass()).get(0);
-		subComponentManager.saveInternal(component);
+
+		load(component);
+
+//		grindGens.getLogger().info("Saving component: "+ component.type().name()+"#"+component.id());
+		componentsToSave.add(component);
+//		grindGens.getLogger().info("Saved component: "+ component.type().name()+"#"+component.id());
+
+		GenPlayer genPlayer = component.genPlayer();
+		genPlayer.addComponent(component);
+		genPlayer.requestSave();
 	}
 
-	@Override
 	public void delete(@NotNull Component component) {
-		if (componentManagers.get(component.getClass()) == null || componentManagers.get(component.getClass()).isEmpty()){
-			return;
-		}
-		//noinspection unchecked
-		SubComponentManager<Component> subComponentManager = (SubComponentManager<Component>) componentManagers.get(component.getClass()).get(0);
-		subComponentManager.deleteInternal(component);
+		unload(component);
+		grindGens.getLogger().info("Removing component: "+ component.type().name());
+
+		grindGens.componentDatabase().delete(component);
+		component.setDeleted(true);
+
+		GenPlayer genPlayer = component.genPlayer();
+		genPlayer.removeComponent(component);
+		genPlayer.requestSave();
+		return;
 	}
 
-	@Override
-	public void tickIfCan(@NotNull SubComponentManager<?> subComponentManager) {
-		if (subComponentManager.canTick()){
-			subComponentManager.tick();
+	public void tickIfCan(@NotNull Component component) {
+		try {
+			if (component.canTick()) {
+				component.tick();
+			}
+		} catch (ClassCastException e) {
+			throw new RuntimeException(e);
 		}
 	}
-
-	@Override
 	public Random random() {
 		return random;
 	}
 
 	@Override
-	public void load(Component component) {
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			subComponentManager.loadInternalDef(component);
+	public void load(@NotNull Component component) {
+
+		Location location = component.location();
+		Block block = location.getBlock();
+		if (block.getType() != component.blockMaterial()){
+			grindGens.getLogger().severe("Component of " + component.type().name() + " at " + location.x()+ ", "+ location.y()+ ", "+ location.z() + ", "+ location.getWorld().getName()+ " is not the correct block type of " + component.blockMaterial().name() + " but instead " + block.getType().name()+".\nThis component will not be used and will be removed from player's components!");
+			delete(component); // Make sure players and other components are in sync
+			return;
 		}
+
+		chunkComponents.putIfAbsent(component.location().getChunk(), new HashSet<>());
+		chunkComponents.get(component.location().getChunk()).add(component);
+		locationComponents.put(component.location(), component);
 	}
 
 	@Override
 	public void unload(Component component) {
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			subComponentManager.unloadInternalDef(component);
+		chunkComponents.get(component.location().getChunk()).remove(component);
+		if (chunkComponents.get(component.location().getChunk()) != null && chunkComponents.get(component.location().getChunk()).isEmpty()) {
+			chunkComponents.remove(component.location().getChunk());
 		}
-	}
-
-	@Override
-	public void load(GenPlayer genPlayer) {
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			subComponentManager.load(genPlayer);
-		}
-	}
-
-	@Override
-	public void unload(GenPlayer genPlayer) {
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			subComponentManager.unload(genPlayer);
-		}
+		locationComponents.remove(component.location());
 	}
 
 	@Override
 	public int requestSecureId() {
-		return random.nextInt(1, Integer.MAX_VALUE);
+		return random.nextInt(-32766, 32766);
 	}
 
 	@Override
@@ -175,8 +174,8 @@ public class GlobalComponentManager implements Ticked, PlayerLoader, SecureId, C
 
 	@Override
 	public void tick() throws IllegalStateException {
-		for (SubComponentManager<?> subComponentManager : subComponentManagers){
-			tickIfCan(subComponentManager);
+		for (Component component : locationComponents.values()){
+			tickIfCan(component);
 		}
 	}
 

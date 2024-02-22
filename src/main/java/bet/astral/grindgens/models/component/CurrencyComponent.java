@@ -5,10 +5,8 @@
  * is strictly prohibited.
  */
 
-package bet.astral.grindgens.utils;
+package bet.astral.grindgens.models.component;
 
-public enum TriState {
-	HIGHER,
-	LOWER,
-	SAME
+public interface CurrencyComponent extends Component {
+	String currencyName();
 }

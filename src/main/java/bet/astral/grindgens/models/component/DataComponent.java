@@ -7,10 +7,9 @@
 
 package bet.astral.grindgens.models.component;
 
-import bet.astral.grindgens.models.internals.Ticked;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
-public interface TickedComponent extends Ticked {
-	boolean isLoaded();
-	void setLoaded(boolean isLoaded);
-	long lastLoaded();
+public interface DataComponent extends Component {
+	JsonElement dataAsJson() throws JsonParseException;
 }

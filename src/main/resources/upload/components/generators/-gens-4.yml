@@ -1,0 +1,60 @@
+#
+# This file is disabled and wont be used. To enable this file rename it to gens-4.yml
+#
+
+
+DIAMOND:
+  first-join:
+    # How many are given to new players
+    give: 3
+
+  # The menu displayname of the upgrade menu
+  upgrade-displayname: "<yellow>Diamond Generator"
+  source:
+    material: DIAMOND_BLOCK
+    displayname: "<yellow>Diamond Generator" # This is not required
+    lore:
+      - "<yellow><strikethrough>                        "
+      - "<gray>Value (Each): <white>%value%"
+      - "<gray>DPS: <white>%drop-rate-second%" # drop-rate-tick
+      - "<yellow><strikethrough>                        "
+    custom-model: 0 # This is only used for texture packs
+  drop-rate-tiers:
+    1:
+      cost: 0
+      value: 30
+    2:
+      cost: 0
+      value: 25
+    3:
+      cost: 0
+      value: 20
+    4:
+      cost: 0
+      value: 15
+    5:
+      cost: 0
+      value: 10
+    6:
+      cost: 0
+      value: 5
+
+  value-tiers:
+    1:
+      cost: 0
+      value: 0.05
+    2:
+      cost: 0
+      value: 0.09
+    3:
+      cost: 0
+      value: 0.15
+    4:
+      cost: 0
+      value: 0.20
+    5:
+      cost: 0
+      value: 0.25
+    6:
+      cost: 0
+      value: 0.30

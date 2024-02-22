@@ -1,0 +1,8 @@
+#
+# This file is empty and will be ignored.
+#  You can create unlimited amounts of "gens-NUMBER.yml/yaml"
+#       (Note: You can rename the files to anything, but -" names are ignored.
+#         add - before name to disable it remove - to enable it)
+#   as the generator loader loops through all files in ./components/generators/
+#  It's advised to split generators to their own files.
+#

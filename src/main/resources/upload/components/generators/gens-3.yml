@@ -1,0 +1,117 @@
+# This file contains "COAL" generator as gens-1.yml.
+# The file loaded firstly (gens-1.yml based on the default files will load first) will only be loaded.
+# This files COAL will not be loaded, but it will only send error in the console about the double of COAL
+COAL:
+  first-join:
+    # How many are given to new players
+    give: 3
+
+  # The menu displayname of the upgrade menu
+  upgrade-displayname: "<yellow>Coal Generator <gray>(<white>%tier%<gray>)"
+  source:
+    material: COAL_BLOCK
+    displayname: "<yellow>Coal Generator" # This is not required
+    lore:
+      - "<yellow><strikethrough>                        "
+      - "<gray>Value (Each): <white>%value%"
+      - "<gray>DPS: <white>%drop-rate-second%" # drop-rate-tick
+      - "<yellow><strikethrough>                        "
+    custom-model: 0 # This is only used for texture packs
+
+  drop-rate-tiers:
+    1:
+      cost: 0
+      value: 30
+    2:
+      cost: 0
+      value: 25
+    3:
+      cost: 0
+      value: 20
+    4:
+      cost: 0
+      value: 15
+    5:
+      cost: 0
+      value: 10
+    6:
+      cost: 0
+      value: 5
+
+  value-tiers:
+    1:
+      cost: 0
+      value: 0.05
+    2:
+      cost: 0
+      value: 0.09
+    3:
+      cost: 0
+      value: 0.15
+    4:
+      cost: 0
+      value: 0.20
+    5:
+      cost: 0
+      value: 0.25
+    6:
+      cost: 0
+      value: 0.30
+
+
+COPPER:
+  first-join:
+    # How many are given to new players
+    give: 3
+
+  # The menu displayname of the upgrade menu
+  upgrade-displayname: "<yellow>Copper Generator"
+  source:
+    material: COPPER_BLOCK
+    displayname: "<yellow>Copper Generator" # This is not required
+    lore:
+      - "<yellow><strikethrough>                        "
+      - "<gray>Value (Each): <white>%value%"
+      - "<gray>DPS: <white>%drop-rate-second%" # drop-rate-tick
+      - "<yellow><strikethrough>                        "
+    custom-model: 0 # This is only used for texture packs
+
+  drop-rate-tiers:
+    1:
+      cost: 0
+      value: 30
+    2:
+      cost: 0
+      value: 25
+    3:
+      cost: 0
+      value: 20
+    4:
+      cost: 0
+      value: 15
+    5:
+      cost: 0
+      value: 10
+    6:
+      cost: 0
+      value: 5
+
+  value-tiers:
+    1:
+      cost: 0
+      value: 0.05
+    2:
+      cost: 0
+      value: 0.09
+    3:
+      cost: 0
+      value: 0.15
+    4:
+      cost: 0
+      value: 0.20
+    5:
+      cost: 0
+      value: 0.25
+    6:
+      cost: 0
+      value: 0.30

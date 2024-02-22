@@ -1,0 +1,8 @@
+# This file is not finalized yet and not implemented.
+#  If you have ideas how it should work dm. @antritus
+
+generators:
+  - "./components/generators/"
+# Examples:
+#  - "./components/generators/tiers-1-25/"
+#  - "./components/generators/tiers-26-50/"
